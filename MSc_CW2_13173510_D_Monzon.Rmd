@@ -1,0 +1,383 @@
+---
+title: "MSc_CW2_13173510_D_Monzon.rmd."
+author: "Delvin Monzon"
+date: "08/01/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1a) 
+Buy	
+Yes        | 	No
+14/30=0.47 |	16/30=0.53
+
+P(Student|Buy)		
+Buy	|Student = T	  |Student = F
+Yes	|7/14  = 0.5	  |7/14=0.5
+No	|11/16 = 0.688	|5/16 = 0.313
+
+P(Income|Buy)	Income	
+Buy	 |    High	   |   Low
+Yes	 |  5/14=0.357 |	9/14=0.643
+No	 |  7/16=0.438 |  9/16=0.563
+
+P(Credit|Income,Student,Buy)			|Credit	
+Income|	Student| Buy  |  Excellent | Fair
+High 	|  T	   | Yes	|  1/2=0.5	 | 1/2=0.5
+Low	  |  T	   | Yes	|  2/5=0.4	 | 3/5=0.6
+High 	|  F	   | No	  |  2/3=0.66	 | 1/3=0.33
+Low	  |  F	   | No	  |  1/2=0.5	 | 1/2=0.5
+High 	|  F	   | Yes	|  2/3=0.667 | 1/3=0.33
+Low	  |  F	   | Yes	|  2/4=0.5	 | 2/4=0.5
+High 	|  T	   | No	  |  2/4=0.5	 | 2/4=0.5
+Low	  |  T	   | No	  |  2/7=0.29	 | 5/7=0.71
+
+b)
+Testing Instance 31:
+P(Income=Low|Buy=Y)*P(Student=F|Buy=Y)*P(Credit=Excellent|Income=Low,Student=F,Buy=Y)*P(Buy=Y)
+0.5*0.47*0.5*0.643 = 0.076
+
+P(Income=Low|Buy=N)*P(Student=F|Buy=N)*P(Credit=Excellent|Income=Low,Student=F,Buy=N)*P(Buy=N)
+0.5*0.53*0.313*0.563 = 0.047
+
+Most probable: Buy = Yes.
+
+Testing Instance 32: 
+P(Income=High|Buy=Y)*P(Student=F|Buy=Y)*P(Credit=Fair|Income= High,Student=F,Buy=Y)*P(Buy=Y)
+0.33*0.47*0.5*0.357= 0.028
+
+
+P(Income=High|Buy=N)*P(Student=F|Buy=N)*P(Credit=Fair|Income= High,Student=F,Buy=N)*P(Buy=N)
+0.33*0.53*0.313*0.438 = 0.024
+
+Most probable: Buy = Yes.
+
+
+c) 
+
+Buy	
+Yes        | 	No
+14/30=0.47 |	16/30=0.53
+
+P(Student|Buy)		
+Buy	|Student = T	  |Student = F
+Yes	|7/14  = 0.5	  |7/14=0.5
+No	|11/16 = 0.688	|5/16 = 0.313
+
+P(Income|Buy)	Income	
+Buy	 |    High	   |   Low
+Yes	 |  5/14=0.357 |	9/14=0.643
+No	 |  7/16=0.438 |  9/16=0.563
+
+P(Credit|Buy)	Credit	
+Buy |	    Excellent   |	Fair
+Yes	|     7/14=0.5	  | 7/14=0.5
+No	|     7/16=0.4375 |	9/16=0.5625
+
+d) 
+Testing Instance 31:
+P(Income=Low|Buy=Y)*P(Student=F|Buy=Y)*P(Credit=Excellent|Buy=Y)*P(Buy=Y)
+0.47*0.5*0.643*0.5 = 0.0755
+
+P(Income=Low|Buy=N)*P(Student=F|Buy=N)*P(Credit=Excellent|Buy=N)*P(Buy=N)
+0.53*0.313*0.563*0.438= 0.0409
+Most probable: Buy = Yes.
+
+Testing Instance 32: 
+P(Income=High|Buy=Y)*P(Student=F|Buy=Y)*P(Credit=Fair|Buy=Y)*P(Buy=Y)
+0.47*0.5*0.357*0.5=0.0419
+
+P(Income=High|Buy=N)*P(Student=F|Buy=N)*P(Credit=Fair|Buy=N)*P(Buy=N)
+0.53*0.313*0.438*0.563=0.0409
+Most probable: Buy = Yes.
+
+2a) 
+```{r}
+library(readr) 
+library(dplyr) 
+library(tree)
+
+OccTrain.data <- "RoomOccupancy_Training.txt" %>%
+  read_csv %>% # read in the data
+  select(Temperature, Humidity, Light, CO2, HumidityRatio, Occupancy) %>% 
+  mutate(Occupancy = factor(Occupancy))
+
+tree.OccTrain <- tree(Occupancy~.-Occupancy, OccTrain.data) 
+summary(tree.OccTrain)
+plot(tree.OccTrain) 
+text(tree.OccTrain, pretty=0)
+```
+1.25% misclassification error rate on training data. 
+
+
+```{r}
+#Test data set
+Test.data <- "RoomOccupancy_testing.txt" %>%
+  read_csv %>% # read in the data
+  select(Temperature, Humidity, Light, CO2, HumidityRatio, Occupancy) %>% 
+  mutate(Occupancy = factor(Occupancy))
+
+Occ.Test = Test.data$Occupancy
+summary(Occ.Test)
+
+#Build the tree using training set
+tree.Occ.train <- tree(Occupancy ~. -Occupancy, OccTrain.data)
+summary(tree.Occ.train)
+plot(tree.Occ.train) 
+text(tree.Occ.train,pretty=0)
+
+#Evaluate model with test data
+tree.Occ.pred <- predict(tree.Occ.train,Test.data,type="class") 
+mean(tree.Occ.pred!= Occ.Test)
+table(tree.Occ.pred, Occ.Test)
+
+(45+16)/(195+16+45+44)
+
+```
+2b)
+Training error rate = 0.0125 = 1.25%
+
+Test data: 
+Using a confusion matrix (False P + False N)/total:
+From confusion matrix: (16+45)/(195+16+45+44)
+Error rate is 0.2033333 = 20.3%
+
+Significantly higher than training data error rate but is as expected. 
+
+It is expected that the test accuracy would be higher than the training error rate, as the tree was built on trained data. 
+
+There are only 6 terminal nodes produced in this classification tree. As a result it has a higher bias, lower variance and better interpretation then a larger tree. 
+```{r}
+cv.occ = cv.tree(tree.OccTrain, FUN=prune.misclass)
+cv.occ
+```
+If I were to prune the tree further, the above cv error rate ($dev) is lowest at 6 nodes and thus by pruning the tree would result in a worse test error rate. Hence, pruning is not required. 
+
+
+2c) y = Occupancy (yes/no)
+    x = all features other than Occupancy
+```{r}
+library(randomForest)
+bag.occupancy = randomForest(Occupancy~. -Occupancy, 
+                             data = OccTrain.data,
+                             mtry = 2,
+                             importance = TRUE)
+```
+
+
+```{r}
+bag.pred = predict(bag.occupancy, newdata = Test.data, type = "class")
+print(mean(bag.pred!=Occ.Test)) #22.3%
+```
+
+
+2d)
+```{r}
+testMSE <- rep(0,5) 
+for(i in 1:5){
+set.seed(4)
+rf.occ <- randomForest(Occupancy ~ ., data=OccTrain.data, mtry=i,importance=TRUE) 
+yhat.rf <- predict(rf.occ, newdata=Test.data)
+testMSE[i] <- mean((yhat.rf!=Occ.Test))
+}
+plot(testMSE,type="b",xlab="mtry",ylab="Test MSE")
+```
+According to the above graph to find the optimal number of features (mtry), mtry = 1, however, when running the randomforest when mtry = 2 the MSE/test error rate is the lowest. This coincides with the empirical result of mtry = squareroot(p), where p is the number of predictions. In the example above, p = 5  (minusing 'Occupancy') and sqrt(5) = 2.24 which is ~2. 
+
+However, the error accuracy obtained using the random forest classifier is around 21.7%. Comparatively, using a decision tree resulted in an error rate of 20.3%.
+
+```{r}
+importance(bag.occupancy)
+```
+
+
+```{r}
+varImpPlot(bag.occupancy)
+```
+A value close to 0 means less importance. By looking at the plots above, Light seems to be the most important variable. 
+
+```{r}
+barplot(sort(importance(bag.occupancy)[,1], decreasing = TRUE), 
+        xlab = "Relative Importance",
+        horiz = TRUE,
+        col = "red",
+        las=1 
+        )
+```
+The larger the score given, the more influence the variable has  when splitting on a particulr variable. 
+
+As seen above in the relative influence plot, the importance of features used in the random forest classifier is seen above: Light, by far, is the most important variable/feature, followed by temperature. The least important is Humidity and humidity ratio. 
+
+
+3a)
+
+```{r}
+library(e1071)
+winedata.train = read.table("WineQuality_training.txt", header = T, sep = ',')
+winedata.test = read.table("WineQuality_testing.txt", header = T, sep = ',')
+
+tune.out <- tune(svm, 
+                 quality ~.,
+                 data = winedata.train,
+                 kernel = "linear",
+                 ranges = list(cost = c(0.01,0.1,1,5,10),
+                               gamma = c(0.01,0.03,0.1,0.5,1)))
+summary(tune.out)
+
+svmWine.linear.pred = predict(tune.out$best.model, newdata = winedata.test)
+summary(tune.out$best.model)
+mean(winedata.test$quality!=svmWine.linear.pred)
+table(svmWine.linear.pred,winedata.test$quality)
+```
+3c)
+```{r}
+tune.out2 <- tune(svm, 
+                 quality ~.,
+                 data = winedata.train,
+                 kernel = "radial",
+                 ranges = list(cost = c(0.01,0.1,1,5,10),
+                               gamma = c(0.01,0.03,0.1,0.5,1)))
+summary(tune.out2)
+
+svmWine.radial.pred<-predict(tune.out2$best.model,newdata=winedata.test) 
+summary(tune.out2$best.model)
+mean(winedata.test$quality!=svmWine.radial.pred)
+table(svmWine.radial.pred,winedata.test$quality)
+
+```
+
+
+3e)
+```{r}
+library(gplots)
+library(ROCR)
+v1 = as.numeric(svmWine.linear.pred)
+pr_trained_model1 <- prediction(v1, winedata.test$quality) 
+auroc_trained_model1 <- performance(pr_trained_model1, measure = "auc") 
+auroc_trained_model_value1 <- auroc_trained_model1@y.values[[1]] 
+print(paste("The AUROC value of the trained model using linear kernel is", auroc_trained_model_value1,"."))
+
+v2 = as.numeric(svmWine.radial.pred)
+pr_trained_model2 <- prediction(v2, winedata.test$quality)
+auroc_trained_model2 <- performance(pr_trained_model2, measure = "auc") 
+auroc_trained_model_value2 <- auroc_trained_model2@y.values[[1]] 
+print(paste("The AUROC value of the trained model using RBF kernel is", auroc_trained_model_value2,"."))
+
+
+prf_trained_model1 <- performance(pr_trained_model1, measure = "tpr", x.measure = "fpr") 
+prf_trained_model2 <- performance(pr_trained_model2, measure = "tpr", x.measure = "fpr") 
+
+plot(prf_trained_model1, col= 'Blue', main = "ROC models using varying features")
+plot(prf_trained_model2, col= 'Red', add = TRUE)
+
+legend("bottomright",
+       legend = c('Linear','RBF'), 
+                  lty=1, cex=0.9, bty="n", col = c("Blue","Red")
+       ) 
+abline(a = 0, b = 1)
+```
+
+The larger area under a ROC curve indicates better accuracy, therefore using 'RBF' kernel obtained the best accuracy compared to 'Linear' (0.689,0.687 respectively), although only slightly. 'Linear' had a slightly higher peak TPR. 
+
+4a)
+
+```{r}
+library(ISLR)
+data = USArrests
+hclust.cor.comp <- hclust(dist(data), method="complete")
+plot(hclust.cor.comp, main="Complete Linkage without scaling",xlab= "states in US", cex=0.9)
+
+```
+4b) 
+
+```{r}
+tree = cutree(hclust.cor.comp,3)
+show(tree)
+
+```
+Cluster 1: Alabama, Alaska, Arizona, California, Delaware, Florida, Illinois, Louisiana, Maryland, Michigan, Misssissippi, Nevada, New Mexico, New York, North Carolina, South Carolina, 
+
+Cluster 2: Arkansas, Colorado, Georgia, Massachusetts, Missouri, New Jersey, Oklahoma, Oregon, Rhode Island, Tennessee, Texas, Virginia, Washington, Wyoming.
+
+Cluster 3: Connecticut, Hawaii, Idaho, Indiana, Iowa, Kansas, Kentucky, Maine, Minnesota, Montana, Nebraska, New Hampshire, North Dakota, Ohio, Pennsylvania, South Dakota, Vermont, West Virginia, Wisconsin. 
+
+4c) 
+```{r}
+scaled.data <- scale(data) 
+hc.scaled.data = hclust(dist(scaled.data),method = "complete")
+plot(hc.scaled.data,xlab = "States in US", main="Hierarchical Clustering with Scaled Features", cex = 0.9) 
+```
+
+4d) The effect of scaling the variables results in a possible  4 clusters being present in the dendrogram at around height 4.5. Also, the height scale has significantly reduced. 
+
+The variables should be scaled before dissimilarities are computed because the variables are all utilising different scales and have ranging variances. By scaling them, to have mean = 0 and standard deviation = 1, each variable will be given equal importance/weighting in the clustering performed.
+
+Additionally, as seen in the dendrograms above, scaling effects what states go into what clusters.
+
+5a) 
+```{r}
+set.seed(1)
+y = matrix(rnorm(60*50), nrow = 60, ncol = 50)
+
+y[1:20,1:50] = y[1:20,1:50] +1
+y[41:60,1:50] = y[41:60,1:50]-3
+plot(y)
+
+labels = c(rep(1,20),rep(2,20),rep(3,20))
+
+
+#5b)
+pc.y <- prcomp(y, scale=FALSE)
+
+#pc.y$rotation
+biplot(pc.y, scale=FALSE, main = "Biplot, Scale = F")
+
+plot(pc.y$x[,1:2],
+     col = labels,
+     xlab="x",ylab="y",
+     pch=19)
+
+```
+
+```{r}
+biplot(pc.y, scale=T, main = "Biplot. Scale = T")
+```
+
+
+5c) 
+```{r}
+km.y3 = kmeans(y,3, nstart = 100)
+table(clustered = km.y3$cluster,original = labels)
+
+```
+The clusters obtained in K-means clustering are all correct and match the true class labels. 
+
+5d) 
+Performing K = 2 results in the original clusters 1 and 2 being joined together to form a single cluster (clustered 2). Original 3 remained unchanged. 
+```{r}
+km.y2 = kmeans(y,2, nstart = 100)
+table(clustered = km.y2$cluster,original = labels)
+```
+5e)
+Using K = 4, the original cluster 3 was split into two separate clusters. Original 1 and 2 remained the same. 
+```{r}
+km.y4 = kmeans(y,4, nstart = 100)
+table(clustered = km.y4$cluster,original = labels)
+```
+5f) 
+The clusters remain correct and match the original cluster labels. 
+```{r}
+km.y3 = kmeans(pc.y$x[,1:2],3, nstart=100)
+table(clustered =km.y3$cluster, original = labels)
+
+```
+
+5g) Scaling the data has no effect on the clustering - all are clustered correctly. 
+Scaling is extremely useful for data that use different measuerment scales (e.g. grams vs kilograms) as increased weighting is given to those of higher variance. Seeing as all the variables are of similar scale, weighting is more evenly distributed and does not effect the results.  
+```{r}
+km.y3.scaled = kmeans(scale(y), 3, nstart=100)
+table(clustered = km.y3.scaled$cluster, original = labels)
+```
+
